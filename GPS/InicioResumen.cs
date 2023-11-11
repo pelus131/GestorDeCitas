@@ -16,21 +16,16 @@ namespace GestorDeCitas
 {
     public partial class InicioResumen : Form
     {
-        string connectionString,servicio,Nombre,telefono,NombreC,ApellidoC,TelefonoC;
-        string fecha = DateTime.Now.ToLongDateString();
-
-
-        DataTable dt = new DataTable("Citas");
-        DataTable dt2 = new DataTable("Servicios");
-        DataTable dt3 = new DataTable("Trabajadores");
-        DataTable dt4 = new DataTable("Clientes");
-
+        private string connectionString, servicio, Nombre, telefono, NombreC, ApellidoC, TelefonoC;
+        private readonly DataTable dt = new DataTable("Citas");
+        private readonly DataTable dt2 = new DataTable("Servicios");
+        private readonly DataTable dt3 = new DataTable("Trabajadores");
+        private readonly DataTable dt4 = new DataTable("Clientes");
 
         public InicioResumen()
         {
             InitializeComponent();
             connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
-
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -39,141 +34,113 @@ namespace GestorDeCitas
             lblFecha.Text = DateTime.Now.ToLongDateString();
         }
 
-
-        
-
-
-        private void panel9_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
-
-
-        private void pictureBox1_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void InicioResumen_Load(object sender, EventArgs e)
         {
-            string  query = "SELECT Cl.Nombre,Cl.Apellido,Cl.Telefono,Ci.Servicio,Ci.Hora FROM Clientes  AS Cl INNER JOIN Citas AS Ci ON Ci.id_cliente = Cl.Id WHERE Fecha = @Fecha ORDER BY Cl.Nombre  ";
-            string query2 = "Select Servicio FROM Servicios";
-            string query3 = "Select Nombre,Telefono FROM Trabajadores";
-            string query4 = "Select Nombre,Apellido,Telefono FROM Clientes";
+            LoadData();
+        }
+
+        private void LoadData()
+        {
+            string query = "SELECT Cl.Nombre, Cl.Apellido, Cl.Telefono, Ci.Servicio, Ci.Hora FROM Clientes AS Cl INNER JOIN Citas AS Ci ON Ci.id_cliente = Cl.Id WHERE Fecha = @Fecha ORDER BY Cl.Nombre";
+            string query2 = "SELECT Servicio FROM Servicios";
+            string query3 = "SELECT Nombre, Telefono FROM Trabajadores";
+            string query4 = "SELECT Nombre, Apellido, Telefono FROM Clientes";
+
             using (SQLiteConnection con = new SQLiteConnection(connectionString))
             using (SQLiteCommand cmd = new SQLiteCommand(query, con))
-            using (SQLiteCommand cmd2 = new SQLiteCommand(query2,con))  
-            using (SQLiteCommand cmd3 = new SQLiteCommand(query3,con))    
-            using (SQLiteCommand cmd4 = new SQLiteCommand(query4,con))
-
+            using (SQLiteCommand cmd2 = new SQLiteCommand(query2, con))
+            using (SQLiteCommand cmd3 = new SQLiteCommand(query3, con))
+            using (SQLiteCommand cmd4 = new SQLiteCommand(query4, con))
             {
-                cmd.Parameters.Add(new SQLiteParameter("@Fecha", fecha));
+                cmd.Parameters.Add(new SQLiteParameter("@Fecha", DateTime.Now.ToLongDateString()));
 
                 using (SQLiteDataAdapter adapter = new SQLiteDataAdapter(cmd))
                 using (SQLiteDataAdapter adapter2 = new SQLiteDataAdapter(cmd2))
                 using (SQLiteDataAdapter adapter3 = new SQLiteDataAdapter(cmd3))
                 using (SQLiteDataAdapter adapter4 = new SQLiteDataAdapter(cmd4))
                 {
-
-
-
-
-
                     adapter.Fill(dt);
                     adapter2.Fill(dt2);
                     adapter3.Fill(dt3);
                     adapter4.Fill(dt4);
-                    CitasDeHoy.DataSource = dt;
 
+                    CitasDeHoy.DataSource = dt;
                     Servicios.DataSource = dt2;
                     Estilistas.DataSource = dt3;
                     dataGridView1.DataSource = dt4;
-
-                    con.Close();
-
                 }
-
-
-
-
             }
 
             CitasDeHoy.AutoResizeColumns();
             CitasDeHoy.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
         }
+        //Clean the selection of the datagridviews at the moment that the datagridview finishes the databinding to avoid information deleted by accident
+        private void ClearSelections()
+        {
+            Servicios.ClearSelection();
+            Estilistas.ClearSelection();
+            dataGridView1.ClearSelection();
+            CitasDeHoy.ClearSelection();
+        }
 
         private void Servicios_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
-         
-            Servicios.ClearSelection();
+            ClearSelections();
         }
 
         private void Estilistas_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
-            Estilistas.ClearSelection();
+            ClearSelections();
         }
 
         private void dataGridView1_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
-            dataGridView1.ClearSelection();
-
+            ClearSelections();
         }
 
         private void CitasDeHoy_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
         {
-            CitasDeHoy.ClearSelection();
+            ClearSelections();
         }
 
         private void Estilistas_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             this.Nombre = Estilistas.Rows[e.RowIndex].Cells[0].Value.ToString();
             this.telefono = Estilistas.Rows[e.RowIndex].Cells[1].Value.ToString();
+        }
 
-
+        private void DeleteRecord(string tableName, string condition)
+        {
+            try
+            {
+                using (SQLiteConnection con = new SQLiteConnection(connectionString))
+                using (SQLiteCommand deleteRecord = new SQLiteCommand($"DELETE FROM {tableName} WHERE {condition}", con))
+                {
+                    con.Open();
+                    deleteRecord.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void metroSetButton3_Click(object sender, EventArgs e)
         {
-
             if (dataGridView1.SelectedRows.Count == 0)
             {
                 MessageBox.Show("No hay un Cliente seleccionado");
             }
             else
             {
-                try
-                {
-
-                    string sql = "DELETE FROM Clientes WHERE Nombre = @Nombre AND Apellido = @Apellido AND Telefono = @Telefono";
-
-                    using (SQLiteConnection con = new SQLiteConnection(connectionString))
-                    using (SQLiteCommand deleteRecord = new SQLiteCommand(sql, con))
-                    {
-                        con.Open();
-
-                        deleteRecord.Parameters.Add(new SQLiteParameter("@Nombre", NombreC));
-                        deleteRecord.Parameters.Add(new SQLiteParameter("@Apellido", ApellidoC));
-                        deleteRecord.Parameters.Add(new SQLiteParameter("@Telefono", TelefonoC));
-
-
-
-
-
-                        deleteRecord.ExecuteNonQuery();
-
-                        int selectedIndex = dataGridView1.SelectedRows[0].Index;
-
-                        dataGridView1.Rows.RemoveAt(selectedIndex);
-                        con.Close();
-                        con.Dispose();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
+                string condition = $"Nombre = '{NombreC}' AND Apellido = '{ApellidoC}' AND Telefono = '{TelefonoC}'";
+                DeleteRecord("Clientes", condition);
+                int selectedIndex = dataGridView1.SelectedRows[0].Index;
+                dataGridView1.Rows.RemoveAt(selectedIndex);
             }
         }
+
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             this.NombreC = dataGridView1.Rows[e.RowIndex].Cells[0].Value.ToString();
@@ -189,33 +156,10 @@ namespace GestorDeCitas
             }
             else
             {
-                try
-                {
-
-                    string sql = "DELETE FROM Servicios WHERE Servicio = @Servicio ";
-
-                    using (SQLiteConnection con = new SQLiteConnection(connectionString))
-                    using (SQLiteCommand deleteRecord = new SQLiteCommand(sql, con))
-                    {
-                        con.Open();
-
-                        deleteRecord.Parameters.Add(new SQLiteParameter("@Servicio", servicio));
-                        
-
-
-                        deleteRecord.ExecuteNonQuery();
-
-                        int selectedIndex = Servicios.SelectedRows[0].Index;
-
-                        Servicios.Rows.RemoveAt(selectedIndex);
-                        con.Close();
-                        con.Dispose();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
+                string condition = $"Servicio = '{servicio}'";
+                DeleteRecord("Servicios", condition);
+                int selectedIndex = Servicios.SelectedRows[0].Index;
+                Servicios.Rows.RemoveAt(selectedIndex);
             }
         }
 
@@ -227,41 +171,16 @@ namespace GestorDeCitas
             }
             else
             {
-                try
-                {
-
-                    string sql = "DELETE FROM Trabajadores WHERE Nombre = @Nombre AND Telefono = @Telefono  ";
-
-                    using (SQLiteConnection con = new SQLiteConnection(connectionString))
-                    using (SQLiteCommand deleteRecord = new SQLiteCommand(sql, con))
-                    {
-                        con.Open();
-
-                        deleteRecord.Parameters.Add(new SQLiteParameter("@Nombre", Nombre));
-                        deleteRecord.Parameters.Add(new SQLiteParameter("@Telefono", telefono));
-
-
-
-                        deleteRecord.ExecuteNonQuery();
-
-                        int selectedIndex = Estilistas.SelectedRows[0].Index;
-
-                        Estilistas.Rows.RemoveAt(selectedIndex);
-                        con.Close();
-                        con.Dispose();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
+                string condition = $"Nombre = '{Nombre}' AND Telefono = '{telefono}'";
+                DeleteRecord("Trabajadores", condition);
+                int selectedIndex = Estilistas.SelectedRows[0].Index;
+                Estilistas.Rows.RemoveAt(selectedIndex);
             }
         }
 
         private void Servicios_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            this.servicio= Servicios.Rows[e.RowIndex].Cells[0].Value.ToString();
+            this.servicio = Servicios.Rows[e.RowIndex].Cells[0].Value.ToString();
         }
     }
 }
-

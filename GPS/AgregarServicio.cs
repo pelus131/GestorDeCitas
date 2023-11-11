@@ -15,141 +15,109 @@ namespace GestorDeCitas
 {
     public partial class AgregarServicio : MetroSetForm
     {
+        private readonly string connectionString;
+        private int workerId = 0;
 
-        string connectionString;
-        int er = 0;
         public AgregarServicio()
         {
             InitializeComponent();
             connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
-
         }
-        private void update()
+
+        private int GetTotalWorkers()
         {
             using (SQLiteConnection con = new SQLiteConnection(connectionString))
-            using (SQLiteCommand count = new SQLiteCommand("SELECT count (id) from Trabajadores as total", con))
+            using (SQLiteCommand count = new SQLiteCommand("SELECT COUNT(id) FROM Trabajadores", con))
             {
                 con.Open();
-                SQLiteDataReader qw = count.ExecuteReader();
-                qw.Read();
-                int qd = qw.GetInt32(0);
-                this.er = qd + 1;
-
-                count.Dispose();
-                con.Close();
-
+                int totalWorkers = Convert.ToInt32(count.ExecuteScalar());
+                return totalWorkers;
             }
         }
-        private void metroSetButton1_Click(object sender, EventArgs e)
+
+        private void InsertService()
         {
             if (serviciotext.Text == "")
             {
                 MessageBox.Show("Falta un campo por llenar");
+                return;
             }
-            else
+
+            try
             {
-                try
+                using (SQLiteConnection con = new SQLiteConnection(connectionString))
                 {
-
-                    using (SQLiteConnection con = new SQLiteConnection(connectionString))
+                    con.Open();
+                    using (SQLiteCommand cmd = new SQLiteCommand(@"INSERT INTO Servicios (Servicio) VALUES (@Servicio)", con))
                     {
-                        SQLiteCommand cmd = new SQLiteCommand();
-
-                        cmd.CommandText = @"INSERT INTO Servicios (Servicio) VALUES (@Servicio)";
-                        cmd.Connection = con;
                         cmd.Parameters.Add(new SQLiteParameter("@Servicio", serviciotext.Text));
-
-                        con.Open();
 
                         int i = cmd.ExecuteNonQuery();
                         if (i == 1)
-
                         {
                             MessageBox.Show("Servicio agregado correctamente");
                         }
-                        con.Close();
-                        con.Dispose();
-
-
-
                     }
-
-
-
-
                 }
-                catch (Exception ex)
-                {
-
-                    MessageBox.Show(ex.Message);
-
-                }
-                serviciotext.Text = "";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
             }
 
+            serviciotext.Text = "";
         }
 
-        private void metroSetLabel2_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void metroSetButton2_Click(object sender, EventArgs e)
+        private void InsertWorker()
         {
             if (nombretext.Text == "" || telefonotext.Text == "")
             {
                 MessageBox.Show("Falta un campo por llenar");
+                return;
             }
-            else
+
+            try
             {
-
-                try
+                using (SQLiteConnection con = new SQLiteConnection(connectionString))
                 {
-
-
-                    using (SQLiteConnection con = new SQLiteConnection(connectionString))
+                    con.Open();
+                    using (SQLiteCommand cmd = new SQLiteCommand(@"INSERT INTO Trabajadores (id, Nombre, Telefono) VALUES (@id, @Nombre, @Telefono)", con))
                     {
-                        SQLiteCommand cmd = new SQLiteCommand();
-
-                        cmd.CommandText = @"INSERT INTO Trabajadores (id,Nombre,Telefono) VALUES (@id,@Nombre,@Telefono)";
-                        cmd.Connection = con;
-                        cmd.Parameters.Add(new SQLiteParameter("@id", er));
+                        cmd.Parameters.Add(new SQLiteParameter("@id", workerId));
                         cmd.Parameters.Add(new SQLiteParameter("@Nombre", nombretext.Text));
                         cmd.Parameters.Add(new SQLiteParameter("@Telefono", telefonotext.Text));
 
-                        con.Open();
-
                         int i = cmd.ExecuteNonQuery();
                         if (i == 1)
-
                         {
                             MessageBox.Show("Trabajador agregado correctamente");
                         }
-                        con.Close();
-                        con.Dispose();
-
-
-
                     }
-
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-
-                }
-
-                er++;
-                nombretext.Text = "";
-                telefonotext.Text = "";
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+
+            workerId++;
+            nombretext.Text = "";
+            telefonotext.Text = "";
+        }
+
+        private void metroSetButton1_Click(object sender, EventArgs e)
+        {
+            InsertService();
+        }
+
+        private void metroSetButton2_Click(object sender, EventArgs e)
+        {
+            InsertWorker();
         }
 
         private void AgregarServicio_Load(object sender, EventArgs e)
         {
-            update();
+            workerId = GetTotalWorkers();
         }
-
-        
     }
 }
