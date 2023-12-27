@@ -15,15 +15,15 @@ namespace GestorDeCitas
 {
     public partial class AgregarServicio : MetroSetForm
     {
+        //Declaration of connection path
         private readonly string connectionString;
-        private int workerId = 0;
 
         public AgregarServicio()
         {
             InitializeComponent();
             connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
         }
-
+        //Get Total Workers in Trabajadores table and returned as Integer to control the IDs of table when inserting new data
         private int GetTotalWorkers()
         {
             using (SQLiteConnection con = new SQLiteConnection(connectionString))
@@ -34,9 +34,10 @@ namespace GestorDeCitas
                 return totalWorkers;
             }
         }
-
+        //Insert Servicio in Service table 
         private void InsertService()
         {
+            //Validate fields
             if (serviciotext.Text == "")
             {
                 MessageBox.Show("Falta un campo por llenar");
@@ -46,30 +47,31 @@ namespace GestorDeCitas
             try
             {
                 using (SQLiteConnection con = new SQLiteConnection(connectionString))
+                using (SQLiteCommand cmd = new SQLiteCommand(@"INSERT INTO Servicios (Servicio) VALUES (@Servicio)", con))
+
                 {
                     con.Open();
-                    using (SQLiteCommand cmd = new SQLiteCommand(@"INSERT INTO Servicios (Servicio) VALUES (@Servicio)", con))
+                    cmd.Parameters.Add(new SQLiteParameter("@Servicio", serviciotext.Text));
+                    //If return 1 the query executed sucessfully
+                    int i = cmd.ExecuteNonQuery();
+                    if (i == 1)
                     {
-                        cmd.Parameters.Add(new SQLiteParameter("@Servicio", serviciotext.Text));
-
-                        int i = cmd.ExecuteNonQuery();
-                        if (i == 1)
-                        {
-                            MessageBox.Show("Servicio agregado correctamente");
-                        }
+                        MessageBox.Show("Servicio agregado correctamente");
                     }
                 }
+
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-
+            //Clear the field
             serviciotext.Text = "";
         }
-
+        //Insert Workers in trabajadores table
         private void InsertWorker()
         {
+            //Validate Fields
             if (nombretext.Text == "" || telefonotext.Text == "")
             {
                 MessageBox.Show("Falta un campo por llenar");
@@ -79,28 +81,28 @@ namespace GestorDeCitas
             try
             {
                 using (SQLiteConnection con = new SQLiteConnection(connectionString))
+                using (SQLiteCommand cmd = new SQLiteCommand(@"INSERT INTO Trabajadores (id, Nombre, Telefono) VALUES (@id, @Nombre, @Telefono)", con))
                 {
                     con.Open();
-                    using (SQLiteCommand cmd = new SQLiteCommand(@"INSERT INTO Trabajadores (id, Nombre, Telefono) VALUES (@id, @Nombre, @Telefono)", con))
-                    {
-                        cmd.Parameters.Add(new SQLiteParameter("@id", workerId));
-                        cmd.Parameters.Add(new SQLiteParameter("@Nombre", nombretext.Text));
-                        cmd.Parameters.Add(new SQLiteParameter("@Telefono", telefonotext.Text));
 
-                        int i = cmd.ExecuteNonQuery();
-                        if (i == 1)
-                        {
-                            MessageBox.Show("Trabajador agregado correctamente");
-                        }
+                    cmd.Parameters.Add(new SQLiteParameter("@id", GetTotalWorkers()+1));
+                    cmd.Parameters.Add(new SQLiteParameter("@Nombre", nombretext.Text));
+                    cmd.Parameters.Add(new SQLiteParameter("@Telefono", telefonotext.Text));
+
+                    //If return 1 the query executed sucessfully
+                    int i = cmd.ExecuteNonQuery();
+                    if (i == 1)
+                    {
+                        MessageBox.Show("Trabajador agregado correctamente");
                     }
+
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
-
-            workerId++;
+            //Clear fields 
             nombretext.Text = "";
             telefonotext.Text = "";
         }
@@ -117,7 +119,6 @@ namespace GestorDeCitas
 
         private void AgregarServicio_Load(object sender, EventArgs e)
         {
-            workerId = GetTotalWorkers();
         }
     }
 }

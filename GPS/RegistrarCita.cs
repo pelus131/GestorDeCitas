@@ -37,6 +37,7 @@ namespace GestorDeCitas
             }
         }
 
+        //Fill the combobox from data from database
         private void fillcombo(string tableName, MetroSetComboBox comboBox)
         {
             comboBox.Items.Clear();
@@ -54,7 +55,7 @@ namespace GestorDeCitas
                 }
             }
         }
-
+        //Fill the checkbox from data from database
         private void fillcheck()
         {
             DataTable dt = new DataTable();
@@ -73,7 +74,7 @@ namespace GestorDeCitas
                 }
             }
         }
-
+        //Insert data into Clientes table from database
         private void metroSetButton1_Click(object sender, EventArgs e)
         {
             if (TextboxClienteNombre.Text == "" || textboxApellido.Text == "" || TextboxNumero.Text == "")
@@ -94,7 +95,7 @@ namespace GestorDeCitas
                             cmc.Parameters.Add(new SQLiteParameter("@Nombre", TextboxClienteNombre.Text));
                             cmc.Parameters.Add(new SQLiteParameter("@Apellido", textboxApellido.Text));
                             cmc.Parameters.Add(new SQLiteParameter("@Telefono", TextboxNumero.Text));
-
+                            //If return 1 means a success operation because we inserted 1 row
                             int i = cmc.ExecuteNonQuery();
                             if (i == 1)
                             {
@@ -107,7 +108,7 @@ namespace GestorDeCitas
                 {
                     MessageBox.Show(ex.Message);
                 }
-
+                //Clean fields and sum 1 to the variable that controls the Ids
                 er++;
                 metroSetTextBox1.Text = er.ToString();
                 fillcombo("Clientes", metroSetComboBox1);
@@ -116,7 +117,7 @@ namespace GestorDeCitas
                 TextboxNumero.Text = "";
             }
         }
-
+        //Load all data when is opened
         private void RegistrarCita_Load(object sender, EventArgs e)
         {
             dateTimePicker2.Format = DateTimePickerFormat.Custom;
@@ -127,13 +128,13 @@ namespace GestorDeCitas
             update();
             metroSetTextBox1.Text = er.ToString();
         }
-
+        //Debug field for testing. Can be deleted afterwards with the textbox in design
         private void metroSetComboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             idClientSelected = metroSetComboBox1.SelectedIndex + 1;
             metroSetTextBox2.Text = idClientSelected.ToString();
         }
-
+        //Insert data to Citas table in database
         private void metroSetButton2_Click(object sender, EventArgs e)
         {
             if (metroSetComboBox1.GetItemText(metroSetComboBox1.SelectedItem) == "" || metroSetComboBox2.GetItemText(metroSetComboBox2.SelectedItem) == "" || checkedListBox1.CheckedItems.Count == 0)
@@ -143,7 +144,7 @@ namespace GestorDeCitas
             else
             {
                 string servicios = "";
-
+                //Convert the checked items to string separated by a coma
                 for (int i = 0; i < checkedListBox1.Items.Count; i++)
                 {
                     if (checkedListBox1.GetItemChecked(i))
@@ -179,6 +180,7 @@ namespace GestorDeCitas
                         }
                     }
                 }
+                //Error returned when constraint from database is triggered meaning that already exist an appointment in Citas table
                 catch (Exception ex)
                 {
                     MessageBox.Show("Fecha y Hora ya tienen una cita previa!");

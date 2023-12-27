@@ -22,8 +22,8 @@ namespace GestorDeCitas
             InitializeComponent();
             connectionString = ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
         }
-
-        protected void FillCombo()
+        //Fill combobox Cliente with data from database
+        private void fillComboBoxCliente()
         {
             comboBox1.Items.Clear();
 
@@ -40,12 +40,12 @@ namespace GestorDeCitas
                 }
             }
         }
-
-        private void EditarCita_Load(object sender, EventArgs e)
+        //Fill FEcha, Hora and checkbox upon loading the form
+        private void fillBaseForm()
         {
             dateTimePicker2.Format = DateTimePickerFormat.Custom;
             dateTimePicker2.CustomFormat = "hh:mm tt";
-            FillCombo();
+            fillComboBoxCliente();
 
             DataTable dt = new DataTable();
 
@@ -58,16 +58,24 @@ namespace GestorDeCitas
                 checkedListBox1.DisplayMember = "Servicio";
             }
         }
+        private void EditarCita_Load(object sender, EventArgs e)
+        {
+            fillBaseForm();
+        }
 
-        private void FillCombo2()
+        //Fill the Citas del Cliente combo box with data from database
+        private void fillComboBoxCitasCliente()
         {
             comboBox2.Items.Clear();
+            string query = "SELECT Servicio FROM Citas WHERE id_cliente = @idCliente"
             int control1 = comboBox1.SelectedIndex + 1;
 
             using (SQLiteConnection conn = new SQLiteConnection(connectionString))
-            using (SQLiteCommand cmd = new SQLiteCommand($"SELECT Servicio FROM Citas WHERE id_cliente = {control1}", conn))
+            using (SQLiteCommand cmd = new SQLiteCommand(query,conn))
             {
                 conn.Open();
+                cmd.Parameters.Add(new SQLiteParameter("@idCliente", control1));
+
                 using (SQLiteDataReader sdr1 = cmd.ExecuteReader())
                 {
                     while (sdr1.Read())
@@ -77,12 +85,71 @@ namespace GestorDeCitas
                 }
             }
         }
+        //Save the edited data into the data base
+        private void saveEditedData()
+        {
+            string servicios = "";
+            //Convert the Checkbox checked elements  into String with a , to insert in database
+            try
+            {
+                for (int i = 0; i < checkedListBox1.Items.Count; i++)
+                {
+                    if (checkedListBox1.GetItemChecked(i))
+                    {
+                        servicios += ((DataRowView)checkedListBox1.Items[i])[0].ToString() + ",";
+                    }
+                }
+                //Delete the last ,
+                servicios = servicios.Remove(servicios.Length - 1);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            //Validate fields
+            if (checkedListBox1.CheckedItems.Count == 0 || comboBox1.GetItemText(comboBox1.SelectedItem) == "" || comboBox2.GetItemText(comboBox2.SelectedItem) == "")
+            {
+                MessageBox.Show("Falta un campo por llenar");
+            }
+            else
+            {
+                //Insert the data into database
+                try
+                {
+                    using (SQLiteConnection con = new SQLiteConnection(connectionString))
+                    using (SQLiteCommand cmd = new SQLiteCommand($"UPDATE Citas SET Servicio=@Servicio, Fecha=@Fecha, Hora=@Hora WHERE id = '{controlid}'", con))
+                    {
+                        cmd.Parameters.Add(new SQLiteParameter("@Servicio", servicios));
+                        cmd.Parameters.Add(new SQLiteParameter("@Fecha", dateTimePicker1.Text));
+                        cmd.Parameters.Add(new SQLiteParameter("@Hora", dateTimePicker2.Text));
+
+                        con.Open();
+
+                        int i = cmd.ExecuteNonQuery();
+                        if (i == 1)
+                        {
+                            MessageBox.Show("Editado con Éxito");
+                        }
+
+                        con.Close();
+                    }
+                }
+                //Catch the exeption from database. This exeption is showed thanks to a constraint in database that states no duplicated date and time 
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Fecha Y Hora Ya tiene una cita previa!");
+                }
+
+                fillComboBoxCitasCliente();
+            }
+        }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            FillCombo2();
+            fillComboBoxCitasCliente();
         }
 
+        //When we select an element from Combobox Citas Del Cliente fill the Fecha,hora and Servicios actuales with data from the element selected
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
             string control = comboBox2.Text;
@@ -106,56 +173,7 @@ namespace GestorDeCitas
 
         private void metroSetButton1_Click(object sender, EventArgs e)
         {
-            string servicios = "";
-
-            try
-            {
-                for (int i = 0; i < checkedListBox1.Items.Count; i++)
-                {
-                    if (checkedListBox1.GetItemChecked(i))
-                    {
-                        servicios += ((DataRowView)checkedListBox1.Items[i])[0].ToString() + ",";
-                    }
-                }
-                servicios = servicios.Remove(servicios.Length - 1);
-            }
-            catch (Exception ex)
-            {
-            }
-
-            if (checkedListBox1.CheckedItems.Count == 0 || comboBox1.GetItemText(comboBox1.SelectedItem) == "" || comboBox2.GetItemText(comboBox2.SelectedItem) == "")
-            {
-                MessageBox.Show("Falta un campo por llenar");
-            }
-            else
-            {
-                try
-                {
-                    using (SQLiteConnection con = new SQLiteConnection(connectionString))
-                    using (SQLiteCommand cmd = new SQLiteCommand($"UPDATE Citas SET Servicio=@Servicio, Fecha=@Fecha, Hora=@Hora WHERE id = '{controlid}'", con))
-                    {
-                        cmd.Parameters.Add(new SQLiteParameter("@Servicio", servicios));
-                        cmd.Parameters.Add(new SQLiteParameter("@Fecha", dateTimePicker1.Text));
-                        cmd.Parameters.Add(new SQLiteParameter("@Hora", dateTimePicker2.Text));
-
-                        con.Open();
-
-                        int i = cmd.ExecuteNonQuery();
-                        if (i == 1)
-                        {
-                            MessageBox.Show("Editado con Éxito");
-                        }
-
-                        con.Close();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Fecha Y Hora Ya tiene una cita previa!");
-                }
-
-                FillCombo2();
-            }
+            saveEditedData();
         }
 
         private void metroSetLabel8_Click(object sender, EventArgs e)

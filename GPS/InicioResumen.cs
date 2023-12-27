@@ -38,7 +38,7 @@ namespace GestorDeCitas
         {
             LoadData();
         }
-
+        //Load all the data from database to all datagridviews upon loading the form
         private void LoadData()
         {
             string query = "SELECT Cl.Nombre, Cl.Apellido, Cl.Telefono, Ci.Servicio, Ci.Hora FROM Clientes AS Cl INNER JOIN Citas AS Ci ON Ci.id_cliente = Cl.Id WHERE Fecha = @Fecha ORDER BY Cl.Nombre";
@@ -74,7 +74,7 @@ namespace GestorDeCitas
             CitasDeHoy.AutoResizeColumns();
             CitasDeHoy.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
         }
-        //Clean the selection of the datagridviews at the moment that the datagridview finishes the databinding to avoid information deleted by accident
+        //Clear the selection of the datagridviews at the moment that the datagridview finishes the databinding to avoid information deleted by accident
         private void ClearSelections()
         {
             Servicios.ClearSelection();
@@ -105,10 +105,10 @@ namespace GestorDeCitas
 
         private void Estilistas_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            this.Nombre = Estilistas.Rows[e.RowIndex].Cells[0].Value.ToString();
-            this.telefono = Estilistas.Rows[e.RowIndex].Cells[1].Value.ToString();
+            Nombre = Estilistas.Rows[e.RowIndex].Cells[0].Value.ToString();
+            telefono = Estilistas.Rows[e.RowIndex].Cells[1].Value.ToString();
         }
-
+        //Function to delete data from database ,recieves the target table and the condition WHERE
         private void DeleteRecord(string tableName, string condition)
         {
             try
@@ -125,7 +125,7 @@ namespace GestorDeCitas
                 MessageBox.Show(ex.Message);
             }
         }
-
+        //Delete Clientes record
         private void metroSetButton3_Click(object sender, EventArgs e)
         {
             if (dataGridView1.SelectedRows.Count == 0)
@@ -143,11 +143,11 @@ namespace GestorDeCitas
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            this.NombreC = dataGridView1.Rows[e.RowIndex].Cells[0].Value.ToString();
-            this.ApellidoC = dataGridView1.Rows[e.RowIndex].Cells[1].Value.ToString();
-            this.TelefonoC = dataGridView1.Rows[e.RowIndex].Cells[2].Value.ToString();
+            NombreC = dataGridView1.Rows[e.RowIndex].Cells[0].Value.ToString();
+            ApellidoC = dataGridView1.Rows[e.RowIndex].Cells[1].Value.ToString();
+            TelefonoC = dataGridView1.Rows[e.RowIndex].Cells[2].Value.ToString();
         }
-
+        //Delete servicios record
         private void metroSetButton1_Click(object sender, EventArgs e)
         {
             if (Servicios.SelectedRows.Count == 0)
@@ -162,7 +162,7 @@ namespace GestorDeCitas
                 Servicios.Rows.RemoveAt(selectedIndex);
             }
         }
-
+        //Delete Estilistas record
         private void metroSetButton2_Click(object sender, EventArgs e)
         {
             if (Estilistas.SelectedRows.Count == 0)
