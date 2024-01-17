@@ -67,7 +67,7 @@ namespace GestorDeCitas
         private void fillComboBoxCitasCliente()
         {
             comboBox2.Items.Clear();
-            string query = "SELECT Servicio FROM Citas WHERE id_cliente = @idCliente"
+            string query = "SELECT Servicio FROM Citas WHERE id_cliente = @idCliente";
             int control1 = comboBox1.SelectedIndex + 1;
 
             using (SQLiteConnection conn = new SQLiteConnection(connectionString))
